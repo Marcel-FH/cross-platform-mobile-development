@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cross-Platform Demo</title>
+<meta name="description" content="Demo zum Referat Cross-Platform Mobile Development: eine Website, die sich wie eine App verhält.">
+<meta name="theme-color" content="#22355f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CP Demo">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root {
+    --navy: #22355f;
+    --navy-deep: #18264a;
+    --orange: #ef8a18;
+    --ink: #ffffff;
+    --soft: #c9d3ea;
+    --ok: #7fd6a2;
+    --no: #ffb199;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--navy);
+    color: var(--ink);
+    padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    display: flex;
+    justify-content: center;
+  }
+  main { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+  .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange); margin: 0; }
+  h1 { font-size: 1.7rem; line-height: 1.15; margin: 4px 0 0; }
+  .card { background: var(--navy-deep); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .k { color: var(--soft); font-size: 0.9rem; }
+  .v { font-weight: 600; font-size: 1.05rem; text-align: right; }
+  button {
+    font: inherit; font-size: 1.15rem; font-weight: 700;
+    background: var(--orange); color: var(--navy-deep);
+    border: 0; border-radius: 14px; padding: 18px; width: 100%;
+    cursor: pointer; touch-action: manipulation;
+  }
+  button:active { transform: scale(0.98); }
+  button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  #result { min-height: 3.2em; margin: 0; font-size: 1rem; line-height: 1.4; }
+  #result.ok { color: var(--ok); }
+  #result.no { color: var(--no); }
+  .note { color: var(--soft); font-size: 0.85rem; line-height: 1.45; margin: 0; }
+  .badge { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--soft); color: var(--soft); }
+  .badge.on { border-color: var(--ok); color: var(--ok); }
+  @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <p class="eyebrow">Technologie-Trends · Cross-Platform</p>
+    <h1>Eine Website, die sich wie eine App verhält</h1>
+  </div>
+
+  <section class="card" aria-label="Dein Gerät">
+    <div class="row"><span class="k">Gerät</span><span class="v" id="os">…</span></div>
+    <div class="row"><span class="k">Browser</span><span class="v" id="browser">…</span></div>
+    <div class="row"><span class="k">Geöffnet als</span><span class="v" id="mode">…</span></div>
+    <div class="row"><span class="k">Offline nutzbar</span><span class="v"><span class="badge" id="offline">wird geprüft</span></span></div>
+  </section>
+
+  <button id="vibrate" type="button">Vibrieren</button>
+  <p id="result" role="status" aria-live="polite"></p>
+
+  <p class="note">Gleicher Code auf iPhone und Android, ohne App Store. Diese Seite fragt keine Berechtigungen an und speichert oder sendet keine Daten.</p>
+</main>
+
+<script>
+(function () {
+  var ua = navigator.userAgent;
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+
+  var os = isIOS ? "iPhone / iPad (iOS)" : isAndroid ? "Android" : "Computer";
+  document.getElementById("os").textContent = os;
+
+  var browser = "unbekannt";
+  if (/SamsungBrowser/.test(ua)) browser = "Samsung Internet";
+  else if (/EdgA|EdgiOS|Edg\//.test(ua)) browser = "Edge";
+  else if (/FxiOS|Firefox/.test(ua)) browser = "Firefox";
+  else if (/CriOS|Chrome/.test(ua)) browser = "Chrome";
+  else if (/Safari/.test(ua)) browser = "Safari";
+  if (isIOS && browser !== "Safari") browser += " (mit Safari-Engine)";
+  document.getElementById("browser").textContent = browser;
+
+  var standalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  document.getElementById("mode").textContent = standalone ? "installierte App" : "Website im Browser";
+
+  var offline = document.getElementById("offline");
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(function () {
+      offline.textContent = "ja";
+      offline.classList.add("on");
+    }).catch(function () {
+      offline.textContent = "nein";
+    });
+  } else {
+    offline.textContent = "nein";
+  }
+
+  var result = document.getElementById("result");
+  document.getElementById("vibrate").addEventListener("click", function () {
+    result.className = "";
+    if (!("vibrate" in navigator)) {
+      result.className = "no";
+      result.textContent = isIOS
+        ? "Nichts passiert: Auf dem iPhone bietet der Browser diese Funktion nicht an. Darüber entscheidet Apple, auch für Chrome und Firefox auf iOS."
+        : "Nichts passiert: Dieser Browser bietet die Vibrations-Funktion nicht an.";
+      return;
+    }
+    var ok = navigator.vibrate([200, 100, 200]);
+    if (ok) {
+      result.className = "ok";
+      result.textContent = "Brrr. Dein Browser darf das Handy vibrieren lassen. Falls du nichts spürst: Lautlos- oder Energiesparmodus können es blockieren.";
+    } else {
+      result.className = "no";
+      result.textContent = "Der Browser kennt die Funktion, hat die Vibration aber abgelehnt.";
+    }
+  });
+})();
+</script>
+</body>
+</html>
