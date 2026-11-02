@@ -114,6 +114,11 @@
   var result = document.getElementById("result");
   document.getElementById("vibrate").addEventListener("click", function () {
     result.className = "";
+    if (!isIOS && !isAndroid) {
+      result.className = "no";
+      result.textContent = "Nichts passiert: Ein Computer hat keinen Vibrationsmotor. Probier es auf dem Handy aus.";
+      return;
+    }
     if (!("vibrate" in navigator)) {
       result.className = "no";
       result.textContent = isIOS
