@@ -1,6 +1,6 @@
 {
   "name": "Cross-Platform Demo",
-  "short_name": "CP Demo",
+  "short_name": "CPMD Demo",
   "description": "Demo zum Referat Cross-Platform Mobile Development",
   "lang": "de",
   "start_url": "./",

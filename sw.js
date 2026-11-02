@@ -1,5 +1,5 @@
 // Service Worker: speichert die Dateien der Demo, damit sie auch offline startet.
-const CACHE = "cp-demo-v2";
+const CACHE = "cp-demo-v3";
 const FILES = [
   "./",
   "./index.html",
